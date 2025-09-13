@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Student Assignment Auto-Evaluator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4472C4, #5B9BD5);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: #4472C4;
+            background: #f0f4f8;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #4472C4;
+            margin-right: 15px;
+            border-radius: 2px;
+        }
+        
+        .file-input-group {
+            margin-bottom: 25px;
+        }
+        
+        .file-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .file-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .file-input:focus {
+            outline: none;
+            border-color: #4472C4;
+            box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
+        }
+        
+        .options-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .option-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e1e5e9;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        
+        .checkbox-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .option-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .evaluate-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+            min-width: 200px;
+        }
+        
+        .evaluate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+        }
+        
+        .evaluate-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4472C4;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results-section {
+            display: none;
+            margin-top: 40px;
+        }
+        
+        .results-header {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .results-content {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .pass { color: #28a745; }
+        .fail { color: #dc3545; }
+        .warning { color: #ffc107; }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+        
+        .results-table th {
+            background: #495057;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .results-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .results-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .grade-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        
+        .grade-A, .grade-B { background: #d4edda; color: #155724; }
+        .grade-C, .grade-D { background: #fff3cd; color: #856404; }
+        .grade-F { background: #f8d7da; color: #721c24; }
+        
+        .download-section {
+            padding: 20px;
+            text-align: center;
+            background: #e9ecef;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.3);
+            text-decoration: none;
+            color: white;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .plagiarism-section {
+            margin-top: 20px;
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .plagiarism-item {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .plagiarism-critical {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .options-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Assignment Evaluator</h1>
+            <p>Automated evaluation with plagiarism detection powered by machine learning</p>
+        </div>
+        
+        <div class="main-content">
+            <form id="evaluationForm" enctype="multipart/form-data">
+                <div class="upload-section">
+                    <h2 class="section-title">📄 Upload Files</h2>
+                    
+                    <div class="file-input-group">
+                        <label for="questionFile">Question/Problem File (PDF or TXT)</label>
+                        <input type="file" id="questionFile" name="question_file" class="file-input" 
+                               accept=".pdf,.txt" required>
+                        <small class="text-muted">Upload the assignment question or problem statement</small>
+                    </div>
+                    
+                    <div class="file-input-group">
+                        <label for="studentFiles">Student Answer Files (Multiple PDFs)</label>
+                        <input type="file" id="studentFiles" name="files[]" class="file-input" 
+                               accept=".pdf" multiple required>
+                        <small class="text-muted">Select multiple PDF files containing student answers</small>
+                    </div>
+                </div>
+                
+                <div class="options-section">
+                    <div class="option-card">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="useOpenAI" name="use_openai" class="checkbox">
+                            <label for="useOpenAI" class="checkbox-label">🧠 OpenAI Enhanced Grading</label>
+                        </div>
+                        <div class="option-description">
+                            Use GPT models for advanced semantic evaluation and detailed feedback. 
+                            Requires API key configuration. More accurate but uses cloud services.
+                        </div>
+                    </div>
+                    
+                    <div class="option-card">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="useVision" name="use_vision" class="checkbox">
+                            <label for="useVision" class="checkbox-label">👁️ Vision OCR Processing</label>
+                        </div>
+                        <div class="option-description">
+                            Enable Google Vision OCR for image-based PDFs and scanned documents. 
+                            Useful when PDFs contain handwritten or image text.
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="evaluate-btn" id="evaluateBtn">
+                    🚀 Evaluate Assignments
+                </button>
+            </form>
+            
+            <div class="loading" id="loadingSection">
+                <div class="spinner"></div>
+                <h3>Processing assignments...</h3>
+                <p>This may take a few moments depending on the number of submissions.</p>
+            </div>
+            
+            <div id="alertContainer"></div>
+            
+            <div class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <h2>📊 Evaluation Results</h2>
+                    <p>Comprehensive analysis with AI-powered insights</p>
+                </div>
+                
+                <div class="results-content">
+                    <div class="summary-stats" id="summaryStats">
+                        <!-- Summary statistics will be populated here -->
+                    </div>
+                    
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Score</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                                <th>Feedback</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <!-- Results will be populated here -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="plagiarism-section" id="plagiarismSection">
+                        <!-- Plagiarism results will be populated here -->
+                    </div>
+                    
+                    <div class="download-section" id="downloadSection">
+                        <h3>📥 Download Detailed Report</h3>
+                        <p>Get a comprehensive Excel report with detailed analysis, metrics, and recommendations.</p>
+                        <!-- Download link will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
